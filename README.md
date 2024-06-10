@@ -1,2 +1,0 @@
-# cyb-vue
-study vue
