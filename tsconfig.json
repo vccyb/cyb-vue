@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "strict": true,
+    "rootDir": ".",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "target": "es2016",
+    "module": "esnext",
+    "noImplicitAny": false,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "downlevelIteration": true,
+    "lib": ["esnext", "DOM"],
+    "types": ["vitest/globals"],
+    "paths": {
+      "@cyb-vue/*": ["packages/*/src"]
+    }
+  },
+  "include": [
+    "packages/**/*.ts",
+    "packages/**/*.d.ts",
+    "packages/**/*.tsx",
+    "packages/**/*.vue",
+    "packages/*/src", 
+    "packages/*/__test__"
+  ]
+}

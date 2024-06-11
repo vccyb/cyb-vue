@@ -1,0 +1,23 @@
+{
+  "name": "cyb-vue",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:ui": "vitest --ui",
+    "build": "vite build"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "@vitest/ui": "^1.6.0",
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "typescript": "^5.4.5",
+    "vite": "^5.2.13"
+  }
+}
