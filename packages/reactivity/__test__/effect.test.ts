@@ -64,7 +64,7 @@ describe("effect", () => {
 
   it("stop", () => {
     let dummy;
-    const obj = reactive({ prop: 1 }) as { prop: number };
+    const obj = reactive({ prop: 1, testCC: 2 }) as { prop: number };
     const runner = effect(() => {
       dummy = obj.prop;
     });
@@ -72,7 +72,8 @@ describe("effect", () => {
     expect(dummy).toBe(2);
 
     stop(runner);
-    obj.prop = 3;
+    // obj.prop = 3;
+    obj.prop++;
     expect(dummy).toBe(2);
     runner();
     expect(dummy).toBe(3);
