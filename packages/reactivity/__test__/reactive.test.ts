@@ -1,4 +1,4 @@
-import { reactive, readonly } from "../src/reactive";
+import { reactive, isReactive } from "../src/reactive";
 
 describe("reactive", () => {
   it("happy path", () => {
@@ -8,26 +8,12 @@ describe("reactive", () => {
     expect(observed).not.toBe(original);
     expect(observed.foo).toBe(1);
   });
-});
 
-describe("readonly", () => {
-  it("happy path", () => {
-    const original = { foo: 1, bar: { baz: 2 } };
-    const wrapped = readonly(original);
+  it("isReactive", () => {
+    const original = { foo: 1 } as { foo: number };
+    const observed = reactive(original);
 
-    expect(wrapped).not.toBe(original);
-    expect(wrapped.foo).toBe(1);
-    expect(wrapped.bar.baz).toBe(2);
-
-    // set can not
-    wrapped.foo = 2;
-    expect(wrapped.foo).toBe(1);
-  });
-
-  it("should call console.warn when set", () => {
-    console.warn = vi.fn();
-    const user = readonly({ age: 10 });
-    user.age = 11;
-    expect(console.warn).toBeCalled();
+    expect(isReactive(observed)).toBe(true);
+    expect(isReactive(original)).toBe(false);
   });
 });

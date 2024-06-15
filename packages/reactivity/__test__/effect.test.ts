@@ -1,4 +1,6 @@
-import { reactive, effect, stop } from "../src/reactive";
+import { effect, stop } from "../src/effect";
+import { reactive } from "../src/reactive";
+
 describe("effect", () => {
   it("happy path", () => {
     // 响应式对象

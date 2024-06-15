@@ -1,4 +1,5 @@
-import { track, trigger } from "./reactive";
+import { track, trigger } from "./effect";
+import { ReactiveFlags } from "./reactive";
 
 const get = createGetter();
 const set = createSetter();
@@ -7,6 +8,15 @@ const readonlyGet = createGetter(true);
 function createGetter(isReadonly = false) {
   return function get(target, key) {
     const res = Reflect.get(target, key);
+
+    // 如果读取的key上 is_reactive 则返回true，
+    // 这个key专门为isReactive 服务
+    if (key === ReactiveFlags.IS_REACTIVE) {
+      return !isReadonly;
+    } else if (key === ReactiveFlags.IS_READONLY) {
+      return isReadonly;
+    }
+
     if (!isReadonly) {
       // 收集依赖
       track(target, key);
