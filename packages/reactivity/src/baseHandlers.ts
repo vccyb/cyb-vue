@@ -1,12 +1,13 @@
-import { isObject } from "@cyb-vue/shared";
+import { extend, isObject } from "@cyb-vue/shared";
 import { track, trigger } from "./effect";
-import { ReactiveFlags, reactive, readonly } from "./reactive";
+import { ReactiveFlags, reactive, readonly, shallowReadonly } from "./reactive";
 
 const get = createGetter();
 const set = createSetter();
 const readonlyGet = createGetter(true);
+const shallowReadonlyGet = createGetter(true, true);
 
-function createGetter(isReadonly = false) {
+function createGetter(isReadonly = false, shallow = false) {
   return function get(target, key) {
     const res = Reflect.get(target, key);
 
@@ -16,6 +17,10 @@ function createGetter(isReadonly = false) {
       return !isReadonly;
     } else if (key === ReactiveFlags.IS_READONLY) {
       return isReadonly;
+    }
+
+    if (shallow) {
+      return res;
     }
 
     // 递归处理res
@@ -39,12 +44,12 @@ function createSetter() {
   };
 }
 
-export const mutableHandlers = {
+const mutableHandlers = {
   get,
   set,
 };
 
-export const readonlyHandlers = {
+const readonlyHandlers = {
   get: readonlyGet,
   set(target, key, value) {
     console.warn(
@@ -54,3 +59,9 @@ export const readonlyHandlers = {
     return true;
   },
 };
+
+const shallowReadonlyHandlers = extend({}, readonlyHandlers, {
+  get: shallowReadonlyGet,
+});
+
+export { mutableHandlers, readonlyHandlers, shallowReadonlyHandlers };
