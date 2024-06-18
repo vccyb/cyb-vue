@@ -33,10 +33,17 @@ function track(target, key) {
   if (!dep) {
     depsMap.set(key, (dep = new Set()));
   }
-  // 已经在改响应式对象的依赖中有该依赖了
+  trackEffects(dep);
+}
+
+/**
+ *
+ * @description 收集依赖 - 将当前激活的副作用函数加入到dep中
+ * @param dep
+ */
+function trackEffects(dep) {
   if (dep.has(activeEffect)) return;
   dep.add(activeEffect);
-  // 反向收集 dep
   activeEffect.deps.push(dep);
 }
 
@@ -48,6 +55,14 @@ function track(target, key) {
 function trigger(target, key) {
   const depsMap = targetMap.get(target);
   let dep = depsMap.get(key);
+  triggerEffects(dep);
+}
+
+/**
+ * @description 触发依赖 - 触发依赖
+ * @param dep
+ */
+function triggerEffects(dep) {
   for (const effect of dep) {
     if (effect.scheduler) {
       effect.scheduler(effect._fn);
@@ -134,4 +149,12 @@ function stop(runner) {
   runner.effect.stop();
 }
 
-export { effect, stop, track, trigger };
+export {
+  effect,
+  stop,
+  track,
+  trigger,
+  trackEffects,
+  triggerEffects,
+  isTracking,
+};

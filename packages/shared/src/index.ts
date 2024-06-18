@@ -11,3 +11,5 @@ export const isObject = (value: any) => {
  * shared
  */
 export const extend = Object.assign;
+
+export const hasChanged = (value, oldValue) => !Object.is(value, oldValue);
