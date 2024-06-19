@@ -1,6 +1,6 @@
-import { count } from "console";
-import { effect, targetMap } from "../src/effect";
-import { ref } from "../src/ref";
+import { effect } from "../src/effect";
+import { reactive } from "../src/reactive";
+import { ref, isRef, unRef, proxyRefs } from "../src/ref";
 describe("ref", () => {
   it("happy path", () => {
     const a = ref(1);
@@ -47,5 +47,44 @@ describe("ref", () => {
     a.value.count = 2;
     expect(dummy).toBe(2);
     console.dir(a.dep);
+  });
+
+  it("isRef", () => {
+    const a = ref(1);
+    const foo = reactive({ bar: 1 });
+    expect(isRef(a)).toBe(true);
+    expect(isRef(1)).toBe(false);
+    expect(isRef(foo)).toBe(false);
+  });
+
+  it("unRef", () => {
+    const a = ref(1);
+    expect(isRef(a)).toBe(true);
+    expect(unRef(a)).toBe(1);
+    expect(unRef("123")).toBe("123");
+    expect(unRef({ a: 1, b: 2 })).toEqual({ a: 1, b: 2 });
+  });
+
+  it("proxyRefs", () => {
+    const foo = {
+      name: "foo",
+      age: ref(20),
+    };
+
+    const proxyFoo = proxyRefs(foo);
+
+    // 对于ref属性，可以不通过value获取
+    expect(foo.age.value).toBe(20);
+    expect(proxyFoo.name).toBe("foo");
+    expect(proxyFoo.age).toBe(20);
+
+    // 修改ref属性，不需要修改value
+    proxyFoo.age = 25;
+    expect(foo.age.value).toBe(25);
+    expect(proxyFoo.age).toBe(25);
+
+    proxyFoo.age = ref(30);
+    expect(foo.age.value).toBe(30);
+    expect(proxyFoo.age).toBe(30);
   });
 });
