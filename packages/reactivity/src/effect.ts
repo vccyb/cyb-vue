@@ -83,7 +83,7 @@ class ReactiveEffect {
   public scheduler?: any;
   private active: boolean = true;
   public onStop?: () => void;
-  constructor(fn, scheduler) {
+  constructor(fn, scheduler?) {
     this._fn = fn;
     this.scheduler = scheduler;
   }
@@ -150,6 +150,7 @@ function stop(runner) {
 }
 
 export {
+  ReactiveEffect,
   effect,
   stop,
   track,
