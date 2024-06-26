@@ -1,3 +1,4 @@
+import { isObject } from "@cyb-vue/shared";
 import {
   mutableHandlers,
   readonlyHandlers,
@@ -7,10 +8,35 @@ import {
 const enum ReactiveFlags {
   IS_REACTIVE = "__v_isReactive",
   IS_READONLY = "__v_isReadonly",
+  RAW = "__v_raw",
 }
 
-function createReactiveObject(target, baseHandlers) {
-  return new Proxy(target, baseHandlers);
+export const reactiveMap = new WeakMap();
+export const readonlyMap = new WeakMap();
+export const shallowReadonlyMap = new WeakMap();
+
+function createReactiveObject(target, baseHandlers, proxyMap) {
+  if (!isObject(target)) {
+    console.warn(`value cannot be made reactive: ${String(target)}`);
+    return target;
+  }
+
+  if (target[ReactiveFlags.RAW]) {
+    return target;
+  }
+
+  const existingProxy = proxyMap.get(target);
+  // 如果已经代理过了
+
+  // 如果监听过了
+  if (existingProxy) {
+    return existingProxy;
+  }
+
+  const proxy = new Proxy(target, baseHandlers);
+  // 缓存
+  proxyMap.set(target, proxy);
+  return proxy;
 }
 
 /**
@@ -19,7 +45,7 @@ function createReactiveObject(target, baseHandlers) {
  * @returns 响应式对象
  */
 function reactive(raw: object) {
-  return createReactiveObject(raw, mutableHandlers);
+  return createReactiveObject(raw, mutableHandlers, reactiveMap);
 }
 
 /**
@@ -28,11 +54,11 @@ function reactive(raw: object) {
  * @returns 只读对象
  */
 function readonly(raw: object) {
-  return createReactiveObject(raw, readonlyHandlers);
+  return createReactiveObject(raw, readonlyHandlers, readonlyMap);
 }
 
 function shallowReadonly(raw: object) {
-  return createReactiveObject(raw, shallowReadonlyHandlers);
+  return createReactiveObject(raw, shallowReadonlyHandlers, shallowReadonlyMap);
 }
 
 // 判断是否是响应式对象

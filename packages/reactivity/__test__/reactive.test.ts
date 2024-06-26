@@ -38,4 +38,33 @@ describe("reactive", () => {
     expect(isReactive(observed.array)).toBe(true);
     expect(isReactive(original.array[0])).toBe(false);
   });
+
+  it("reactive params type must be object", () => {
+    console.warn = vi.fn();
+    //@ts-ignore
+    const original = reactive(1);
+    expect(original).toBe(1);
+  });
+
+  it("observed value should return some proxy if nested", () => {
+    const original = {
+      foo: 1,
+    };
+
+    const observed = reactive(original);
+    const observed2 = reactive(observed);
+
+    expect(observed2).toBe(observed);
+  });
+
+  it("reactive multi observed same target", () => {
+    const original = {
+      foo: 1,
+    };
+
+    const observed = reactive(original);
+    const observed2 = reactive(original);
+
+    expect(observed).toBe(observed2);
+  });
 });
