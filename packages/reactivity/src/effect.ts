@@ -63,7 +63,16 @@ function trigger(target, key) {
  * @param dep
  */
 function triggerEffects(dep) {
-  for (const effect of dep) {
+  const effects = new Set<any>();
+  //如果trigger触发执行的副作用函数与当前正在执行的副作用函数相同，则不触发执行
+  dep &&
+    dep.forEach((effect) => {
+      if (effect !== activeEffect) {
+        effects.add(effect);
+      }
+    });
+
+  for (const effect of effects) {
     if (effect.scheduler) {
       effect.scheduler(effect._fn);
     } else {
@@ -76,6 +85,7 @@ function triggerEffects(dep) {
  * 当前激活的副作用函数
  */
 let activeEffect;
+const effectStack: any = [];
 
 class ReactiveEffect {
   public deps: any[] = [];
@@ -94,13 +104,23 @@ class ReactiveEffect {
       this._fn();
     }
 
-    shouldTrack = true; // 打开track的开关
-
-    activeEffect = this;
-    const result = this._fn();
-
-    shouldTrack = false; // 关闭track的开关
-    return result;
+    if (!effectStack.includes(this)) {
+      let lastShouldTrack = shouldTrack;
+      // 清空依赖
+      cleanupEffect(this);
+      try {
+        shouldTrack = true; // 打开track的开关
+        effectStack.push(this);
+        activeEffect = this;
+        const result = this._fn();
+        shouldTrack = false; // 关闭track的开关
+        return result;
+      } finally {
+        effectStack.pop();
+        shouldTrack = lastShouldTrack;
+        activeEffect = effectStack[effectStack.length - 1];
+      }
+    }
   }
 
   stop() {
