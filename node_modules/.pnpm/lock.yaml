@@ -31,6 +31,12 @@ importers:
         specifier: workspace:^
         version: link:../shared
 
+  packages/runtime-core:
+    dependencies:
+      '@cyb-vue/shared':
+        specifier: workspace:^
+        version: link:../shared
+
   packages/shared: {}
 
   packages/vue:
