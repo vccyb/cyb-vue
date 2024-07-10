@@ -39,7 +39,11 @@ function processComponent(vnode, container) {
 function mountElement(vnode, container) {
   const el = document.createElement(vnode.type);
   const { children } = vnode;
-  el.textContent = children;
+  if (typeof children === "string") {
+    el.textContent = children;
+  } else if (Array.isArray(children)) {
+    mountChildren(children, el);
+  }
   const { props } = vnode;
   for (const [key, value] of Object.entries(props)) {
     el.setAttribute(key, value);
@@ -50,6 +54,11 @@ function mountComponent(vnode, container) {
   const instance = createComponentInstance(vnode);
   setupComponent(instance);
   setupRenderEffect(instance, container);
+}
+function mountChildren(children, container) {
+  children.forEach((v) => {
+    patch(v, container);
+  });
 }
 function setupComponent(instance) {
   setupStatefulComponent(instance);
