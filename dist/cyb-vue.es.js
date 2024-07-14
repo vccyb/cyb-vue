@@ -2,7 +2,8 @@ function createVNode(type, props, children) {
   const vnode = {
     type,
     props,
-    children
+    children,
+    el: null
   };
   return vnode;
 }
@@ -19,6 +20,21 @@ function createComponentInstance(vnode) {
   };
   return componentInstance;
 }
+const publicPropertiesMap = {
+  $el: (i) => i.vnode.el
+};
+const PublicInstanceProxyHandlers = {
+  get({ _: instance }, key) {
+    const { setupState, vnode } = instance;
+    const publicGetter = publicPropertiesMap[key];
+    if (publicGetter) {
+      return publicGetter(instance);
+    }
+    if (key in setupState) {
+      return setupState[key];
+    }
+  }
+};
 function render(vnode, container) {
   patch(vnode, container);
 }
@@ -38,6 +54,7 @@ function processComponent(vnode, container) {
 }
 function mountElement(vnode, container) {
   const el = document.createElement(vnode.type);
+  vnode.el = el;
   const { children } = vnode;
   if (typeof children === "string") {
     el.textContent = children;
@@ -66,6 +83,7 @@ function setupComponent(instance) {
 function setupStatefulComponent(instance) {
   const Component = instance.type;
   const { setup } = Component;
+  instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
   if (setup) {
     const setupResult = setup();
     handleSetupResult(instance, setupResult);
@@ -82,8 +100,10 @@ function finishComponentSetup(instance) {
   instance.render = Component.render;
 }
 function setupRenderEffect(instance, container) {
-  const subTree = instance.render();
+  const { proxy, vnode } = instance;
+  const subTree = instance.render.call(proxy);
   patch(subTree, container);
+  vnode.el = subTree.el;
 }
 function createApp(rootComponent) {
   return {

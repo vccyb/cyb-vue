@@ -1,7 +1,8 @@
 import { h } from "../../dist/cyb-vue.es.js";
-
+window.self = null;
 export const App = {
   render() {
+    window.self = this;
     // 返回虚拟节点
     return h(
       "div",

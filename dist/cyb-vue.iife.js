@@ -4,7 +4,8 @@ var CybVue = function(exports) {
     const vnode = {
       type,
       props,
-      children
+      children,
+      el: null
     };
     return vnode;
   }
@@ -21,6 +22,21 @@ var CybVue = function(exports) {
     };
     return componentInstance;
   }
+  const publicPropertiesMap = {
+    $el: (i) => i.vnode.el
+  };
+  const PublicInstanceProxyHandlers = {
+    get({ _: instance }, key) {
+      const { setupState, vnode } = instance;
+      const publicGetter = publicPropertiesMap[key];
+      if (publicGetter) {
+        return publicGetter(instance);
+      }
+      if (key in setupState) {
+        return setupState[key];
+      }
+    }
+  };
   function render(vnode, container) {
     patch(vnode, container);
   }
@@ -40,6 +56,7 @@ var CybVue = function(exports) {
   }
   function mountElement(vnode, container) {
     const el = document.createElement(vnode.type);
+    vnode.el = el;
     const { children } = vnode;
     if (typeof children === "string") {
       el.textContent = children;
@@ -68,6 +85,7 @@ var CybVue = function(exports) {
   function setupStatefulComponent(instance) {
     const Component = instance.type;
     const { setup } = Component;
+    instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
     if (setup) {
       const setupResult = setup();
       handleSetupResult(instance, setupResult);
@@ -84,8 +102,10 @@ var CybVue = function(exports) {
     instance.render = Component.render;
   }
   function setupRenderEffect(instance, container) {
-    const subTree = instance.render();
+    const { proxy, vnode } = instance;
+    const subTree = instance.render.call(proxy);
     patch(subTree, container);
+    vnode.el = subTree.el;
   }
   function createApp(rootComponent) {
     return {

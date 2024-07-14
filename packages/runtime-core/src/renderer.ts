@@ -1,5 +1,6 @@
 import { isObject } from "@cyb-vue/shared";
 import { createComponentInstance } from "./component";
+import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
 
 /**
  * @description 渲染vnode 到容器上
@@ -41,6 +42,7 @@ function processComponent(vnode, container) {
 
 function mountElement(vnode, container) {
   const el = document.createElement(vnode.type);
+  vnode.el = el;
 
   const { children } = vnode;
   // el.textContent = children;
@@ -87,6 +89,8 @@ function setupStatefulComponent(instance) {
 
   const { setup } = Component;
 
+  instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
+
   if (setup) {
     const setupResult = setup();
     handleSetupResult(instance, setupResult);
@@ -108,8 +112,13 @@ function finishComponentSetup(instance) {
 }
 
 function setupRenderEffect(instance, container) {
-  const subTree = instance.render();
+  const { proxy, vnode } = instance;
+  const subTree = instance.render.call(proxy);
   patch(subTree, container);
+
+  // subTree vnode 经过了patch就变成了真实的dom，此时subTree.el 指向了根dom元素
+  // 将subTree.el 赋值给vnode.el 就可以在根组建实例访问到挂在根dom元素对象
+  vnode.el = subTree.el;
 }
 
 export { render };
