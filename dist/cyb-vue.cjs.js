@@ -1,20 +1,33 @@
 "use strict";
 Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+var ShapeFlags = /* @__PURE__ */ ((ShapeFlags2) => {
+  ShapeFlags2[ShapeFlags2["ELEMENT"] = 1] = "ELEMENT";
+  ShapeFlags2[ShapeFlags2["STATEFUL_COMPONENT"] = 2] = "STATEFUL_COMPONENT";
+  ShapeFlags2[ShapeFlags2["TEXT_CHILDREN"] = 4] = "TEXT_CHILDREN";
+  ShapeFlags2[ShapeFlags2["ARRAY_CHILDREN"] = 8] = "ARRAY_CHILDREN";
+  return ShapeFlags2;
+})(ShapeFlags || {});
 function createVNode(type, props, children) {
   const vnode = {
     type,
     props,
     children,
+    shapeFlag: getShapeFlag(type),
     el: null
   };
+  if (typeof children === "string") {
+    vnode.shapeFlag |= ShapeFlags.TEXT_CHILDREN;
+  } else if (Array.isArray(children)) {
+    vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN;
+  }
   return vnode;
+}
+function getShapeFlag(type) {
+  return typeof type === "string" ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT;
 }
 function h(type, props, children) {
   return createVNode(type, props, children);
 }
-const isObject = (value) => {
-  return value !== null && typeof value === "object";
-};
 function createComponentInstance(vnode) {
   const componentInstance = {
     vnode,
@@ -41,10 +54,10 @@ function render(vnode, container) {
   patch(vnode, container);
 }
 function patch(vnode, container) {
-  const { type } = vnode;
-  if (typeof type === "string") {
+  const { type, shapeFlag } = vnode;
+  if (shapeFlag & ShapeFlags.ELEMENT) {
     processElement(vnode, container);
-  } else if (isObject(type)) {
+  } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
     processComponent(vnode, container);
   }
 }
@@ -57,10 +70,10 @@ function processComponent(vnode, container) {
 function mountElement(vnode, container) {
   const el = document.createElement(vnode.type);
   vnode.el = el;
-  const { children } = vnode;
-  if (typeof children === "string") {
+  const { children, shapeFlag } = vnode;
+  if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
     el.textContent = children;
-  } else if (Array.isArray(children)) {
+  } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
     mountChildren(children, el);
   }
   const { props } = vnode;

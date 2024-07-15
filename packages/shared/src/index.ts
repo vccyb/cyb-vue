@@ -1,3 +1,5 @@
+import { ShapeFlags } from "./shapFlags";
+
 /**
  *
  * @param value 判断的值
@@ -13,3 +15,5 @@ export const isObject = (value: any) => {
 export const extend = Object.assign;
 
 export const hasChanged = (value, oldValue) => !Object.is(value, oldValue);
+
+export { ShapeFlags } from "./shapFlags";
