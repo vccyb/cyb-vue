@@ -76,7 +76,12 @@ function mountElement(vnode, container) {
   }
   const { props } = vnode;
   for (const [key, value] of Object.entries(props)) {
-    el.setAttribute(key, value);
+    const isOn = (key2) => /^on[A-Z]/.test(key2);
+    if (isOn(key)) {
+      el.addEventListener(key.slice(2).toLocaleLowerCase(), value);
+    } else {
+      el.setAttribute(key, value);
+    }
   }
   container.append(el);
 }

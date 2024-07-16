@@ -54,7 +54,13 @@ function mountElement(vnode, container) {
   // props
   const { props } = vnode;
   for (const [key, value] of Object.entries(props)) {
-    el.setAttribute(key, value);
+    const isOn = (key: string) => /^on[A-Z]/.test(key);
+    // 处理事件的监听
+    if (isOn(key)) {
+      el.addEventListener(key.slice(2).toLocaleLowerCase(), value);
+    } else {
+      el.setAttribute(key, value);
+    }
   }
 
   container.append(el);
