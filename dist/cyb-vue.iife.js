@@ -7,6 +7,117 @@ var CybVue = function(exports) {
     ShapeFlags2[ShapeFlags2["ARRAY_CHILDREN"] = 8] = "ARRAY_CHILDREN";
     return ShapeFlags2;
   })(ShapeFlags || {});
+  const isObject = (value) => {
+    return value !== null && typeof value === "object";
+  };
+  const extend = Object.assign;
+  const hasOwn = (target, key) => Object.prototype.hasOwnProperty.call(target, key);
+  const targetMap = /* @__PURE__ */ new WeakMap();
+  function trigger(target, key) {
+    const depsMap = targetMap.get(target);
+    let dep = depsMap.get(key);
+    triggerEffects(dep);
+  }
+  function triggerEffects(dep) {
+    const effects = /* @__PURE__ */ new Set();
+    dep && dep.forEach((effect2) => {
+      if (effect2 !== activeEffect) {
+        effects.add(effect2);
+      }
+    });
+    for (const effect2 of effects) {
+      if (effect2.scheduler) {
+        effect2.scheduler(effect2._fn);
+      } else {
+        effect2.run();
+      }
+    }
+  }
+  let activeEffect;
+  const get = createGetter();
+  const set = createSetter();
+  const readonlyGet = createGetter(true);
+  const shallowReadonlyGet = createGetter(true, true);
+  function createGetter(isReadonly = false, shallow = false) {
+    return function get2(target, key) {
+      const res = Reflect.get(target, key);
+      if (key === ReactiveFlags.IS_REACTIVE) {
+        return !isReadonly;
+      } else if (key === ReactiveFlags.IS_READONLY) {
+        return isReadonly;
+      } else if (key === ReactiveFlags.RAW) {
+        return target;
+      }
+      if (shallow) {
+        return res;
+      }
+      if (isObject(res)) {
+        return isReadonly ? readonly(res) : reactive(res);
+      }
+      return res;
+    };
+  }
+  function createSetter() {
+    return function set2(target, key, value) {
+      const res = Reflect.set(target, key, value);
+      trigger(target, key);
+      return res;
+    };
+  }
+  const mutableHandlers = {
+    get,
+    set
+  };
+  const readonlyHandlers = {
+    get: readonlyGet,
+    set(target, key, value) {
+      console.warn(
+        `key: ${key} set value: ${value} failed, because the target is readonly!`,
+        target
+      );
+      return true;
+    }
+  };
+  const shallowReadonlyHandlers = extend({}, readonlyHandlers, {
+    get: shallowReadonlyGet
+  });
+  var ReactiveFlags = /* @__PURE__ */ ((ReactiveFlags2) => {
+    ReactiveFlags2["IS_REACTIVE"] = "__v_isReactive";
+    ReactiveFlags2["IS_READONLY"] = "__v_isReadonly";
+    ReactiveFlags2["RAW"] = "__v_raw";
+    return ReactiveFlags2;
+  })(ReactiveFlags || {});
+  const reactiveMap = /* @__PURE__ */ new WeakMap();
+  const readonlyMap = /* @__PURE__ */ new WeakMap();
+  const shallowReadonlyMap = /* @__PURE__ */ new WeakMap();
+  function createReactiveObject(target, baseHandlers, proxyMap) {
+    if (!isObject(target)) {
+      console.warn(`target: ${target} must be an object`);
+      return target;
+    }
+    if (target[
+      "__v_raw"
+      /* RAW */
+    ]) {
+      return target;
+    }
+    const existingProxy = proxyMap.get(target);
+    if (existingProxy) {
+      return existingProxy;
+    }
+    const proxy = new Proxy(target, baseHandlers);
+    proxyMap.set(target, proxy);
+    return proxy;
+  }
+  function reactive(raw) {
+    return createReactiveObject(raw, mutableHandlers, reactiveMap);
+  }
+  function readonly(raw) {
+    return createReactiveObject(raw, readonlyHandlers, readonlyMap);
+  }
+  function shallowReadonly(raw) {
+    return createReactiveObject(raw, shallowReadonlyHandlers, shallowReadonlyMap);
+  }
   function createVNode(type, props, children) {
     const vnode = {
       type,
@@ -31,7 +142,9 @@ var CybVue = function(exports) {
   function createComponentInstance(vnode) {
     const componentInstance = {
       vnode,
-      type: vnode.type
+      type: vnode.type,
+      setupState: {},
+      props: {}
     };
     return componentInstance;
   }
@@ -40,16 +153,21 @@ var CybVue = function(exports) {
   };
   const PublicInstanceProxyHandlers = {
     get({ _: instance }, key) {
-      const { setupState, vnode } = instance;
+      const { setupState, vnode, props } = instance;
       const publicGetter = publicPropertiesMap[key];
       if (publicGetter) {
         return publicGetter(instance);
       }
-      if (key in setupState) {
+      if (hasOwn(setupState, key)) {
         return setupState[key];
+      } else if (hasOwn(props, key)) {
+        return props[key];
       }
     }
   };
+  function initProps(instance, rawProps) {
+    instance.props = rawProps ?? {};
+  }
   function render(vnode, container) {
     patch(vnode, container);
   }
@@ -98,6 +216,7 @@ var CybVue = function(exports) {
     });
   }
   function setupComponent(instance) {
+    initProps(instance, instance.vnode.props);
     setupStatefulComponent(instance);
   }
   function setupStatefulComponent(instance) {
@@ -105,7 +224,7 @@ var CybVue = function(exports) {
     const { setup } = Component;
     instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
     if (setup) {
-      const setupResult = setup();
+      const setupResult = setup(shallowReadonly(instance.props));
       handleSetupResult(instance, setupResult);
     }
   }
@@ -135,6 +254,7 @@ var CybVue = function(exports) {
   }
   exports.createApp = createApp;
   exports.h = h;
+  exports.shallowReadonly = shallowReadonly;
   Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
   return exports;
 }({});

@@ -1,6 +1,8 @@
 import { isObject, ShapeFlags } from "@cyb-vue/shared";
 import { createComponentInstance } from "./component";
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
+import { initProps } from "./componentProps";
+import { shallowReadonly } from "@cyb-vue/reactivity";
 
 /**
  * @description 渲染vnode 到容器上
@@ -84,6 +86,7 @@ function mountChildren(children, container) {
 function setupComponent(instance) {
   // TODO
   // initProps
+  initProps(instance, instance.vnode.props);
   // initSlots
 
   setupStatefulComponent(instance);
@@ -97,7 +100,7 @@ function setupStatefulComponent(instance) {
   instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
 
   if (setup) {
-    const setupResult = setup();
+    const setupResult = setup(shallowReadonly(instance.props));
     handleSetupResult(instance, setupResult);
   }
 }

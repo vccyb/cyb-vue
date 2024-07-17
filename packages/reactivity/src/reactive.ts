@@ -17,7 +17,7 @@ export const shallowReadonlyMap = new WeakMap();
 
 function createReactiveObject(target, baseHandlers, proxyMap) {
   if (!isObject(target)) {
-    console.warn(`value cannot be made reactive: ${String(target)}`);
+    console.warn(`target: ${target} must be an object`);
     return target;
   }
 

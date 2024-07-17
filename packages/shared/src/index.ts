@@ -16,4 +16,7 @@ export const extend = Object.assign;
 
 export const hasChanged = (value, oldValue) => !Object.is(value, oldValue);
 
+export const hasOwn = (target, key) =>
+  Object.prototype.hasOwnProperty.call(target, key);
+
 export { ShapeFlags } from "./shapFlags";
