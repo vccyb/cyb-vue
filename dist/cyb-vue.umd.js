@@ -141,13 +141,32 @@
   function h(type, props, children) {
     return createVNode(type, props, children);
   }
+  function emit(instance, event, ...args) {
+    const { props } = instance;
+    console.log("emit", event);
+    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+    const camelize = (str) => {
+      return str.replace(/-(\w)/g, (_, s) => {
+        return s ? s.toUpperCase() : "";
+      });
+    };
+    const toHandlerKey = (str) => {
+      return str ? "on" + capitalize(camelize(str)) : "";
+    };
+    const hanlderKey = toHandlerKey(event);
+    const hanlder = props[hanlderKey];
+    hanlder && hanlder(...args);
+  }
   function createComponentInstance(vnode) {
     const componentInstance = {
       vnode,
       type: vnode.type,
       setupState: {},
-      props: {}
+      props: {},
+      emit: () => {
+      }
     };
+    componentInstance.emit = emit;
     return componentInstance;
   }
   const publicPropertiesMap = {
@@ -226,7 +245,9 @@
     const { setup } = Component;
     instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers);
     if (setup) {
-      const setupResult = setup(shallowReadonly(instance.props));
+      const setupResult = setup(shallowReadonly(instance.props), {
+        emit: instance.emit.bind(null, instance)
+      });
       handleSetupResult(instance, setupResult);
     }
   }
