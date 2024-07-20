@@ -6,6 +6,7 @@ function createComponentInstance(vnode) {
     setupState: {},
     props: {},
     emit: () => {},
+    slots: {},
   };
 
   componentInstance.emit = emit as any;

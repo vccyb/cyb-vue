@@ -164,13 +164,15 @@
       setupState: {},
       props: {},
       emit: () => {
-      }
+      },
+      slots: {}
     };
     componentInstance.emit = emit;
     return componentInstance;
   }
   const publicPropertiesMap = {
-    $el: (i) => i.vnode.el
+    $el: (i) => i.vnode.el,
+    $slots: (i) => i.slots
   };
   const PublicInstanceProxyHandlers = {
     get({ _: instance }, key) {
@@ -188,6 +190,9 @@
   };
   function initProps(instance, rawProps) {
     instance.props = rawProps ?? {};
+  }
+  function initSlots(instance, children) {
+    instance.slots = Array.isArray(children) ? children : [children];
   }
   function render(vnode, container) {
     patch(vnode, container);
@@ -238,6 +243,7 @@
   }
   function setupComponent(instance) {
     initProps(instance, instance.vnode.props);
+    initSlots(instance, instance.vnode.children);
     setupStatefulComponent(instance);
   }
   function setupStatefulComponent(instance) {
@@ -275,8 +281,12 @@
       }
     };
   }
+  function renderSlots(slots) {
+    return createVNode("div", {}, slots);
+  }
   exports2.createApp = createApp;
   exports2.h = h;
+  exports2.renderSlots = renderSlots;
   exports2.shallowReadonly = shallowReadonly;
   Object.defineProperty(exports2, Symbol.toStringTag, { value: "Module" });
 });

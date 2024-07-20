@@ -3,6 +3,7 @@ import { createComponentInstance } from "./component";
 import { PublicInstanceProxyHandlers } from "./componentPublicInstance";
 import { initProps } from "./componentProps";
 import { shallowReadonly } from "@cyb-vue/reactivity";
+import { initSlots } from "./componentSlots";
 
 /**
  * @description 渲染vnode 到容器上
@@ -88,6 +89,7 @@ function setupComponent(instance) {
   // initProps
   initProps(instance, instance.vnode.props);
   // initSlots
+  initSlots(instance, instance.vnode.children);
 
   setupStatefulComponent(instance);
 }

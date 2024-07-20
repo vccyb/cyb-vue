@@ -162,13 +162,15 @@ var CybVue = function(exports) {
       setupState: {},
       props: {},
       emit: () => {
-      }
+      },
+      slots: {}
     };
     componentInstance.emit = emit;
     return componentInstance;
   }
   const publicPropertiesMap = {
-    $el: (i) => i.vnode.el
+    $el: (i) => i.vnode.el,
+    $slots: (i) => i.slots
   };
   const PublicInstanceProxyHandlers = {
     get({ _: instance }, key) {
@@ -186,6 +188,9 @@ var CybVue = function(exports) {
   };
   function initProps(instance, rawProps) {
     instance.props = rawProps ?? {};
+  }
+  function initSlots(instance, children) {
+    instance.slots = Array.isArray(children) ? children : [children];
   }
   function render(vnode, container) {
     patch(vnode, container);
@@ -236,6 +241,7 @@ var CybVue = function(exports) {
   }
   function setupComponent(instance) {
     initProps(instance, instance.vnode.props);
+    initSlots(instance, instance.vnode.children);
     setupStatefulComponent(instance);
   }
   function setupStatefulComponent(instance) {
@@ -273,8 +279,12 @@ var CybVue = function(exports) {
       }
     };
   }
+  function renderSlots(slots) {
+    return createVNode("div", {}, slots);
+  }
   exports.createApp = createApp;
   exports.h = h;
+  exports.renderSlots = renderSlots;
   exports.shallowReadonly = shallowReadonly;
   Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
   return exports;
