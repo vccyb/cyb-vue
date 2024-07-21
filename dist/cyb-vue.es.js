@@ -188,7 +188,16 @@ function initProps(instance, rawProps) {
   instance.props = rawProps ?? {};
 }
 function initSlots(instance, children) {
-  instance.slots = Array.isArray(children) ? children : [children];
+  if (children)
+    normalizeObjectSlots(children, instance.slots);
+}
+function normalizeObjectSlots(children, slots) {
+  for (const [key, value] of Object.entries(children)) {
+    slots[key] = normalizeSlots(value);
+  }
+}
+function normalizeSlots(value) {
+  return Array.isArray(value) ? value : [value];
 }
 function render(vnode, container) {
   patch(vnode, container);
@@ -277,8 +286,11 @@ function createApp(rootComponent) {
     }
   };
 }
-function renderSlots(slots) {
-  return createVNode("div", {}, slots);
+function renderSlots(slots, name) {
+  const slot = slots[name];
+  if (slot) {
+    return createVNode("div", {}, slot);
+  }
 }
 export {
   createApp,
