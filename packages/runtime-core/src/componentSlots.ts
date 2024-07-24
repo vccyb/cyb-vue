@@ -7,12 +7,16 @@ export function initSlots(instance, children) {
   if (children) normalizeObjectSlots(children, instance.slots);
 }
 
-function normalizeObjectSlots(children, slots) {
-  for (const [key, value] of Object.entries(children)) {
-    slots[key] = normalizeSlots(value);
+function normalizeObjectSlots(children: any, slots: any) {
+  for (const [key, value] of Object.entries<any>(children)) {
+    if (typeof value === "object") {
+      slots[key] = normalizeSlots(value);
+    } else if (typeof value === "function") {
+      slots[key] = (props) => normalizeSlots(value(props));
+    }
   }
 }
 
-function normalizeSlots(value) {
+function normalizeSlots(value: any) {
   return Array.isArray(value) ? value : [value];
 }
